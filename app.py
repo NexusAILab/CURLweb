@@ -34,29 +34,32 @@ def run_curl():
         # The entire response (headers + body)
         raw_output = result.stdout + result.stderr
 
-        # Split headers and content
+        # Initialize output variables
         headers = ''
         content = ''
         status_code = None
         json_output = ''
 
-        # Find and split headers and body based on HTTP response pattern
+        # Split headers and content if the output contains HTTP/1.1 or HTTP/2
         if 'HTTP/' in result.stdout:
             split_output = result.stdout.split('\r\n\r\n', 1)
             headers = split_output[0] if len(split_output) > 0 else ''
             content = split_output[1] if len(split_output) > 1 else ''
-        
-        # Extract status code from headers (e.g., HTTP/1.1 200 OK)
-        status_match = re.search(r'HTTP\/\d+\.\d+ (\d+)', headers)
-        if status_match:
-            status_code = int(status_match.group(1))
 
-        # Try to extract JSON from the content if possible
-        if content.startswith('{') or content.startswith('['):
-            json_output = content
+            # Extract status code from headers
+            status_match = re.search(r'HTTP\/\d+\.\d+ (\d+)', headers)
+            if status_match:
+                status_code = int(status_match.group(1))
+
+            # Try to extract JSON from the content if possible
+            if content.startswith('{') or content.startswith('['):
+                json_output = content
+
+        # Construct status message with status code
+        status_message = f"OK ({status_code})" if status_code and 200 <= status_code < 400 else f"ERROR ({status_code})"
 
         return jsonify({
-            "status": "OK" if status_code and 200 <= status_code < 400 else "ERROR",
+            "status": status_message,
             "content": content.strip(),
             "headers": headers.strip(),
             "raw_output": raw_output.strip(),
