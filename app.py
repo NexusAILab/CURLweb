@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, render_template
 import subprocess
 import time
 import os
+import re
 
 app = Flask(__name__)
 
@@ -16,6 +17,10 @@ def run_curl():
     try:
         curl_command = request.json.get('command')
         
+        # Ensure the command includes -i to return headers
+        if '-i' not in curl_command:
+            curl_command += ' -i'
+        
         # Start the timing for the request
         start_time = time.time()
         
@@ -25,30 +30,40 @@ def run_curl():
         # Calculate the timing
         end_time = time.time()
         total_time = round((end_time - start_time) * 1000, 2)  # in milliseconds
-        
-        # Split the output to headers and content if possible
-        headers = ''
-        content = result.stdout
+
+        # The entire response (headers + body)
         raw_output = result.stdout + result.stderr
+
+        # Split headers and content
+        headers = ''
+        content = ''
+        status_code = None
         json_output = ''
-        
-        try:
-            json_output = result.stdout if result.stdout.startswith('{') or result.stdout.startswith('[') else ''
-        except Exception as e:
-            json_output = ''
-        
-        # Simulate headers section for a more detailed output (if curl is run with -i)
+
+        # Find and split headers and body based on HTTP response pattern
         if 'HTTP/' in result.stdout:
-            headers, content = result.stdout.split('\r\n\r\n', 1)
+            split_output = result.stdout.split('\r\n\r\n', 1)
+            headers = split_output[0] if len(split_output) > 0 else ''
+            content = split_output[1] if len(split_output) > 1 else ''
+        
+        # Extract status code from headers (e.g., HTTP/1.1 200 OK)
+        status_match = re.search(r'HTTP\/\d+\.\d+ (\d+)', headers)
+        if status_match:
+            status_code = int(status_match.group(1))
+
+        # Try to extract JSON from the content if possible
+        if content.startswith('{') or content.startswith('['):
+            json_output = content
 
         return jsonify({
-            "status": "OK" if result.returncode == 0 else "ERROR",
-            "content": content,
-            "headers": headers,
-            "raw_output": raw_output,
+            "status": "OK" if status_code and 200 <= status_code < 400 else "ERROR",
+            "content": content.strip(),
+            "headers": headers.strip(),
+            "raw_output": raw_output.strip(),
             "json_output": json_output,
             "timings": f"{total_time} ms",
-            "error": result.stderr,
+            "error": result.stderr.strip(),
+            "status_code": status_code,
             "return_code": result.returncode
         })
     except Exception as e:
