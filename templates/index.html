@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Run cURL from Browser</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        #outputContainer {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        .header {
+            color: green;
+            font-weight: bold;
+        }
+        .section-title {
+            font-weight: bold;
+            color: #444;
+            margin-bottom: 5px;
+        }
+        .output-content {
+            white-space: pre-wrap;
+            font-family: monospace;
+            background-color: #fafafa;
+            padding: 10px;
+            border: 1px solid #ccc;
+        }
+        .success {
+            color: green;
+        }
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Run cURL Command</h1>
+    
+    <form id="curlForm">
+        <label for="command">Enter cURL command:</label><br>
+        <textarea id="command" name="command" rows="4" cols="50" placeholder="e.g. curl -i https://api.example.com"></textarea><br><br>
+        <button type="submit">Run Command</button>
+    </form>
+
+    <div id="outputContainer" style="display:none;">
+        <div class="section">
+            <div class="section-title">Status:</div>
+            <div id="status" class="output-content"></div>
+        </div>
+        
+        <div class="section">
+            <div class="section-title">Content:</div>
+            <div id="content" class="output-content"></div>
+        </div>
+        
+        <div class="section">
+            <div class="section-title">Headers:</div>
+            <div id="headers" class="output-content"></div>
+        </div>
+        
+        <div class="section">
+            <div class="section-title">Raw Output:</div>
+            <div id="raw" class="output-content"></div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">JSON Output:</div>
+            <div id="json" class="output-content"></div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Timings:</div>
+            <div id="timings" class="output-content"></div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('curlForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const command = document.getElementById('command').value;
+            
+            // Make a POST request to run the curl command
+            const response = await fetch('/run_curl', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ command }),
+            });
+            
+            const result = await response.json();
+            
+            // Display output sections
+            document.getElementById('outputContainer').style.display = 'block';
+            document.getElementById('status').textContent = result.status;
+            document.getElementById('content').textContent = result.content || 'No content';
+            document.getElementById('headers').textContent = result.headers || 'No headers';
+            document.getElementById('raw').textContent = result.raw_output || 'No raw output';
+            document.getElementById('json').textContent = result.json_output || 'No JSON';
+            document.getElementById('timings').textContent = result.timings || 'No timing data';
+        });
+    </script>
+
+</body>
+</html>
