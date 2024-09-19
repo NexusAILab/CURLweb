@@ -1,100 +1,165 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Run cURL from Browser</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f9;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #e9ecef;
             margin: 0;
             padding: 20px;
-        }
-        h1 {
             color: #333;
         }
+
+        h1 {
+            color: #007bff;
+        }
+
+        form {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+
         #outputContainer {
             margin-top: 20px;
-            padding: 10px;
-            border: 1px solid #ccc;
+            padding: 20px;
             background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            display: none;
         }
+
         .section {
             margin-bottom: 20px;
         }
-        .header {
-            color: green;
-            font-weight: bold;
-        }
+
         .section-title {
             font-weight: bold;
-            color: #444;
+            color: #007bff;
+            cursor: pointer;
             margin-bottom: 5px;
         }
+
         .output-content {
             white-space: pre-wrap;
             font-family: monospace;
-            background-color: #fafafa;
+            background-color: #f1f3f5;
             padding: 10px;
             border: 1px solid #ccc;
+            border-radius: 4px;
         }
+
+        .output-content.hidden {
+            display: none;
+        }
+
+        .toggle-button {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background-color 0.3s ease;
+        }
+
+        .toggle-button:hover {
+            background-color: #5a6268;
+        }
+
         .success {
             color: green;
         }
+
         .error {
             color: red;
         }
     </style>
 </head>
+
 <body>
 
     <h1>Run cURL Command</h1>
-    
+
     <form id="curlForm">
         <label for="command">Enter cURL command:</label><br>
         <textarea id="command" name="command" rows="4" cols="50" placeholder="e.g. curl -i https://api.example.com"></textarea><br><br>
         <button type="submit">Run Command</button>
     </form>
 
-    <div id="outputContainer" style="display:none;">
-        <div class="section">
-            <div class="section-title">Status:</div>
+    <div id="outputContainer">
+        <button class="toggle-button" onclick="toggleSection('statusSection')">Toggle Status</button>
+        <div class="section" id="statusSection">
+            <div class="section-title" onclick="toggleVisibility('status')">Status:</div>
             <div id="status" class="output-content"></div>
         </div>
-        
-        <div class="section">
-            <div class="section-title">Content:</div>
+
+        <button class="toggle-button" onclick="toggleSection('contentSection')">Toggle Content</button>
+        <div class="section" id="contentSection">
+            <div class="section-title" onclick="toggleVisibility('content')">Content:</div>
             <div id="content" class="output-content"></div>
         </div>
-        
-        <div class="section">
-            <div class="section-title">Headers:</div>
+
+        <button class="toggle-button" onclick="toggleSection('headersSection')">Toggle Headers</button>
+        <div class="section" id="headersSection">
+            <div class="section-title" onclick="toggleVisibility('headers')">Headers:</div>
             <div id="headers" class="output-content"></div>
         </div>
-        
-        <div class="section">
-            <div class="section-title">Raw Output:</div>
+
+        <button class="toggle-button" onclick="toggleSection('rawSection')">Toggle Raw Output</button>
+        <div class="section" id="rawSection">
+            <div class="section-title" onclick="toggleVisibility('raw')">Raw Output:</div>
             <div id="raw" class="output-content"></div>
         </div>
 
-        <div class="section">
-            <div class="section-title">JSON Output:</div>
+        <button class="toggle-button" onclick="toggleSection('jsonSection')">Toggle JSON Output</button>
+        <div class="section" id="jsonSection">
+            <div class="section-title" onclick="toggleVisibility('json')">JSON Output:</div>
             <div id="json" class="output-content"></div>
         </div>
 
-        <div class="section">
-            <div class="section-title">Timings:</div>
+        <button class="toggle-button" onclick="toggleSection('timingsSection')">Toggle Timings</button>
+        <div class="section" id="timingsSection">
+            <div class="section-title" onclick="toggleVisibility('timings')">Timings:</div>
             <div id="timings" class="output-content"></div>
         </div>
     </div>
 
     <script>
-        document.getElementById('curlForm').addEventListener('submit', async function(e) {
+        document.getElementById('curlForm').addEventListener('submit', async function (e) {
             e.preventDefault();
-            
+
             const command = document.getElementById('command').value;
-            
+
             // Make a POST request to run the curl command
             const response = await fetch('/run_curl', {
                 method: 'POST',
@@ -103,9 +168,9 @@
                 },
                 body: JSON.stringify({ command }),
             });
-            
+
             const result = await response.json();
-            
+
             // Display output sections
             document.getElementById('outputContainer').style.display = 'block';
             document.getElementById('status').textContent = result.status;
@@ -115,7 +180,18 @@
             document.getElementById('json').textContent = result.json_output || 'No JSON';
             document.getElementById('timings').textContent = result.timings || 'No timing data';
         });
+
+        function toggleVisibility(sectionId) {
+            const section = document.getElementById(sectionId);
+            section.classList.toggle('hidden');
+        }
+
+        function toggleSection(sectionId) {
+            const section = document.getElementById(sectionId);
+            section.style.display = section.style.display === 'none' ? 'block' : 'none';
+        }
     </script>
 
 </body>
+
 </html>
