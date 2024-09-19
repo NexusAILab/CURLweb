@@ -5,6 +5,11 @@ import os
 
 app = Flask(__name__)
 
+# Route to render the HTML page
+@app.route('/')
+def index():
+    return render_template('index.html')
+
 # Route to handle curl command execution
 @app.route('/run_curl', methods=['POST'])
 def run_curl():
