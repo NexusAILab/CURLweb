@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 import subprocess
 import time
+import os
 
 app = Flask(__name__)
 
@@ -52,4 +53,7 @@ def run_curl():
         })
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Use the PORT environment variable or default to 5000
+    port = int(os.environ.get('PORT', 5000))
+    logger.info(f"Starting the app on port {port}")
+    app.run(host='0.0.0.0', port=port, debug=False)
